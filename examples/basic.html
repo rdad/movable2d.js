@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+
+  <head>
+    <title>Movable2d behaviour : Basic</title>
+    <meta charset="utf-8" />
+
+    <style>
+        body{
+            width:3000px;
+            height: 2000px;
+            overflow: hidden;
+            margin: 0;
+        }
+        .sprite{
+            background-image: url(asset/sprite.png);
+            width: 100px;
+            height: 100px;
+        }
+    </style>
+
+  </head>
+
+  <body>
+
+    <script src="../build/movable2d.min.js"></script>
+    
+      <script>
+          
+          var s = {};
+          movable2d.apply( s );
+          
+          s.elem.className = 'sprite';
+          s.position((window.innerWidth*.5)-50,(window.innerHeight*.5)-50);
+          
+          function move( e ){
+              s.move_to(e.clientX-50, e.clientY-50);
+          }
+          
+          document.body.addEventListener("click", move, false);
+
+
+    </script>
+  </body>
+</html>
