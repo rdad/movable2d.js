@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+
+  <head>
+    <title>Movable2d : Particles example</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />  
+
+    <style>
+        body{
+            margin:0;
+            padding:0;
+            width:3000px;
+            height:2000px;
+            overflow: hidden;
+            background-color: #fff;
+        }
+        
+        .particle{
+            width: 64px;
+            height: 64px;
+            background-image: url(asset/particle.png);
+        }
+        
+        #nbp{
+            position: absolute;
+            width:100%;
+            height:15px;
+            background-color: #a00;
+            z-index: 1000;
+        }
+        
+        #used{
+            float:left;
+            width:10%;
+            height:15px;
+            background-color: #f00;
+        }
+        
+        #nbt{
+            float:right;
+            font-family: sans-serif;
+            color: #fff;
+            width: 40px;
+            text-align: right;
+        }
+    </style>
+
+  </head>
+
+  <body>
+      <div id="nbp">
+          <div id="used"></div>
+          <div id="nbt">500</div>
+      </div>
+      <script src="asset/tankObject.js"></script>
+        <script src="../build/movable2d.min.js"></script>
+    
+      <script>
+          
+          var screen = {
+              width: screen.innerWidth-100,
+              height: screen.innerHeight-100
+          };
+          var tank, domUsed, domFree;
+          
+          window.requestAnimFrame = (function(){
+            return  window.requestAnimationFrame       || 
+                    window.webkitRequestAnimationFrame || 
+                    window.mozRequestAnimationFrame    || 
+                    window.oRequestAnimationFrame      || 
+                    window.msRequestAnimationFrame     || 
+                    function( callback ){
+                        window.setTimeout(callback, 1000 / 60);
+                    };
+            })();
+
+          var Particle = function(){
+             
+          }
+          
+          function on_end( e ){
+
+              e.detail.self.elem.removeEventListener("animation_end", on_end ); 
+              tank.release( e.detail.self );
+              display_nb();
+          }
+          
+          function display_nb(){
+
+              var u   = (tank.get_nb_used() / tank.get_nb_total()) * 100;
+              u   = u+(u<0?-1:0)>>0;
+              domUsed.style.width = u+'%';
+
+              domNbt.innerHTML = tank.get_nb_total();
+          }
+          
+          
+          
+          function init_explosion(e){
+              
+              console.log('boom');
+              
+              var vx, vy, d, p, nb;
+
+              nb = ~~(Math.random()*30)+100;
+
+              while(nb--){
+                  vx = ~~(Math.random()*600)-300 + e.clientX-50;
+                  vy = ~~(Math.random()*600)-300 + e.clientY-50;
+                  d = ~~(Math.random()*600)+300;
+                  
+                  p = tank.get();
+                  if(typeof p.is_movable == 'undefined'){
+                      movable2d.apply( p );
+                      p.elem.className = 'particle';
+                  }
+                  
+                  p.position(e.clientX-50, e.clientY-50).rotation(0).scale(1);
+                  
+                  p.elem.addEventListener("animation_end", on_end ); 
+                  p.animate(vx,vy,0,0,d,"ease-out");
+                  
+              }
+              display_nb();
+          }
+
+          tank = new TankObject(Particle,{
+              quantity_on_start: 100
+          });
+          
+          domUsed = document.getElementById('used');
+          domNbt = document.getElementById('nbt');
+          display_nb();
+          
+          document.body.addEventListener("click", init_explosion, false);
+          document.body.addEventListener("touchstart", init_explosion, false);
+
+    </script>
+  </body>
+</html>

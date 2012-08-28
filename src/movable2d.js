@@ -20,7 +20,7 @@
 
         apply: function( obj ){
             
-            if(!obj)    return;
+            if(!obj || obj.is_movable)    return;
             
             var origin, hook;
             var direction = {run:false, x:0, y:0, v:0};
@@ -34,30 +34,32 @@
             var prefix_css  = p[0];
             var prefix      = p[1];
             
+            hook = (obj.prototype) ? obj.prototype : obj;
+            
             if(this.add_data_to != ''){
-                origin = obj;
+                origin = hook;
                 obj = {};
             }
             
+            
             // ----- properties -----
             
-            obj.is_movable = true;
+            hook.is_movable  = true;
+            hook.x           = 0;
+            hook.y           = 0;
+            hook.r           = 0;
+            hook.s           = 1;
             
-            if(typeof obj.elem == 'undefined')          obj.elem = document.createElement('div');         
-            obj.elem.style.cssText = 'position:absolute; '+prefix_css+'backface-visibility: hidden; '+prefix_css+'transform: translateZ(0);';            
-            this.container.appendChild( obj.elem );
+            if(typeof hook.elem == 'undefined')          hook.elem = document.createElement('div');         
+            hook.elem.style.cssText = 'position:absolute; '+prefix_css+'backface-visibility: hidden; '+prefix_css+'transform: translateZ(0);';            
+            this.container.appendChild( hook.elem );
             
-            var self = obj;
-            obj.elem.addEventListener( prefix + 'TransitionEnd', function( e ){ self.on_animation_end( e ) } , false );
-            
-            obj.x = 0;
-            obj.y = 0;
-            obj.r = 0;
-            obj.s = 1;
-            
+            var self = hook;
+            hook.elem.addEventListener( prefix + 'TransitionEnd', function( e ){ self.on_animation_end( e ) } , false );
+
             // ----- methods -----
             
-            hook = (obj.prototype) ? obj.prototype : obj;
+            
             
             // --- setters
             
@@ -91,36 +93,48 @@
             
             hook.move_to = function(x,y, duration, ease){
                 
-                this.x = x;
-                this.y = y;
-                     
-                this.on_animation_start( duration, ease );
-                this.render();
+                window.setTimeout(function (self, p) {
+                    
+                    self.x = x;
+                    self.y = y;
+
+                    self.on_animation_start( p.d, p.e );
+                    self.render();
+                
+                }, 0, this, { x:x, y:y, d:duration, e:ease});
                 
                 return this;
             }
 
             hook.transform = function(r,s,duration,ease){
 
-                this.r = r;
-                this.s = s;
-                     
-                this.on_animation_start( duration, ease );
-                this.render();  
+                window.setTimeout(function (self, p) {
+                    
+                    self.r = p.r;
+                    self.s = p.s;
+
+                    self.on_animation_start( p.d, p.e );
+                    self.render();  
                 
+                }, 0, this, { r:r, s:s, d:duration, e:ease});
+
                 return this;
             }
             
             hook.animate = function(x,y,r,s,duration,ease){
                 
-                this.x = x;
-                this.y = y;
-                this.r = r;
-                this.s = s;
-                     
-                this.on_animation_start( duration, ease );
-                this.render(); 
+                window.setTimeout(function (self, p) {
+                    
+                    self.x = p.x;
+                    self.y = p.y;
+                    self.r = p.r;
+                    self.s = p.s;
+
+                    self.on_animation_start( p.d, p.e );
+                    self.render(); 
                 
+                }, 0, this, {x:x, y:y, r:r, s:s, d:duration, e:ease});
+ 
                 return this;
             }
             
@@ -154,6 +168,7 @@
             
             hook.on_animation_start = function( d, e ){
 
+                //report('start');
                 d = (d) ? d+'ms' : '1s';
                 e = (e) ? e : 'ease-in-out';
                 this.elem.style[ prefix + 'Transition' ] = prefix_css+'transform '+d+' '+e;
@@ -161,11 +176,13 @@
             
             hook.on_animation_end = function( e ){
 
+                //report('end');
                 if(direction.run == true){
                     this.step_direction();
                     this.render();               
                 }else{
-                    this.elem.style[ prefix + 'Transition' ] = null; 
+                    this.elem.style[ prefix + 'Transition' ] = null;
+                    this.elem.dispatchEvent(new CustomEvent("animation_end", {"detail": {self:this, x:this.x, y:this.y, r:this.r, s:this.s}}));
                 }
             }
 
